@@ -1,0 +1,10 @@
+{% extends "quiz/layout.html" %}
+{% block body %}
+    <h1>{{ quiz.quiz_name }}</h1>
+    <p>{{ question.question_text }}</p>
+    <ul>
+        {% for answer in question.answer_set.all %}
+            <li>{{ answer.choice_text }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

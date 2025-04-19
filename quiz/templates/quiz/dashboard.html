@@ -1,0 +1,13 @@
+{% extends "quiz/layout.html" %}
+{% block body %}
+    <h1>Quiz list</h1>
+    {% if due_quiz_list %}
+        <ul>
+        {% for quiz in due_quiz_list %}
+            <li><a href="{% url 'quiz:question' quiz.id %}">{{ quiz.quiz_name }}</a></li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No quizzes are available.</p>
+    {% endif %}
+{% endblock %}
