@@ -46,3 +46,7 @@ class Result(models.Model):
     @property
     def is_correct(self):
         return self.answer.correct
+    
+    @property
+    def correct_answer(self):
+        return self.question.answer_set.filter(correct=True).first()

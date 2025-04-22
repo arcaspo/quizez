@@ -1,4 +1,4 @@
-from django.shortcuts import get_object_or_404, render, get_list_or_404, HttpResponse
+from django.shortcuts import get_object_or_404, render, get_list_or_404, redirect
 from .models import Quiz
 from .models import Question
 from .models import Answer
@@ -49,6 +49,7 @@ def question(request, quiz_id):
 
     # Get the next question to be displayed
     next_question = get_next_question(quiz, questions, request.user)
+    print(quiz.number_of_questions)
 
     if next_question:
         # If theres another question create a form for it and render the template
@@ -57,7 +58,7 @@ def question(request, quiz_id):
 
     else:
         # If theres no more questions, Show a finished page with stats (not done yet)
-        return HttpResponse("all questions answered")
+        return redirect("quiz:results", quiz_id=quiz_id)
 
 def get_next_question(quiz, questions, user):
     next_question: Question = None
@@ -71,3 +72,21 @@ def get_next_question(quiz, questions, user):
                 next_question = question
 
     return next_question
+
+def results(request, quiz_id):
+    if request.method == "POST":
+        return redirect("quiz:dashboard")
+
+    else:
+        quiz = get_object_or_404(Quiz, pk=quiz_id)
+        results = Result.objects.filter(quiz=quiz, user=request.user)
+
+        num_correct = sum(1 for result in results if result.is_correct)
+        percentage_correct = (num_correct / quiz.number_of_questions) * 100
+
+        return render(request, "quiz/results.html", {
+            "quiz": quiz,
+            "results": results,
+            "num_correct": num_correct,
+            "percentage_correct": percentage_correct,
+        })
