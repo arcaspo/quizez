@@ -1,5 +1,6 @@
 from django import forms
-from .models import Answer
+from .models import Answer, Quiz, Question
+from django.forms import ModelForm
 
 class QuestionForm(forms.Form):
     answer = forms.ChoiceField(
@@ -15,3 +16,18 @@ class QuestionForm(forms.Form):
             (answer.id, answer.choice_text) for answer in Answer.objects.filter(question=question)
         ]
         self.fields['question_id'].initial = question.id
+
+class CreateQuizForm(ModelForm):
+    class Meta:
+        model = Quiz
+        fields = ['quiz_name', 'due_date', 'quiz_description']
+
+class CreateQuestionForm(ModelForm):
+    class Meta:
+        model = Question
+        fields = ['question_text', 'order']
+
+class CreateAnswerForm(ModelForm):
+    class Meta:
+        model = Answer
+        fields = ['choice_text', 'correct', 'order']

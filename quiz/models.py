@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 class Quiz(models.Model):
     quiz_name = models.CharField(max_length=200)
     due_date = models.DateTimeField("due date")
+    quiz_description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.quiz_name
@@ -16,7 +17,6 @@ class Quiz(models.Model):
 class Question(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
     question_text = models.TextField()
-    multiple_answers = models.BooleanField()
     order = models.PositiveIntegerField(default=0)
 
     def __str__(self):
