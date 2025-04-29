@@ -18,6 +18,7 @@ class Question(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
     question_text = models.TextField()
     order = models.PositiveIntegerField(default=0)
+    editing = models.BooleanField(default=False)
 
     def __str__(self):
         return self.question_text
@@ -30,6 +31,7 @@ class Answer(models.Model):
     choice_text = models.CharField(max_length=200)
     correct = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
+    editing = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['order']  # Order by the 'order' field
