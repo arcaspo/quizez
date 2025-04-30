@@ -1,0 +1,18 @@
+{% extends "quiz/base_dashboard.html" %}
+{% block content %}
+    <h1>My Quizzes</h1>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" name="add_quiz">Add Quiz</button>
+    </form>
+    {% if quiz_list %}
+        <ul>
+        {% for quiz in quiz_list %}
+            <li><a href="{% url 'quiz:edit_quiz' quiz.id %}">{{ quiz.quiz_name }}</a></li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No quizzes created.</p>
+    {% endif %}
+    
+{% endblock %}

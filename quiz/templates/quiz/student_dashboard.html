@@ -1,6 +1,6 @@
-{% extends "quiz/layout.html" %}
-{% block body %}
-    <h1>Quiz list</h1>
+{% extends "quiz/base_dashboard.html" %}
+{% block content %}
+    <h1>Due Quizzes</h1>
     {% if due_quiz_list %}
         <ul>
         {% for quiz in due_quiz_list %}
