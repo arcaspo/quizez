@@ -4,7 +4,7 @@ from .models import Quiz, Question, Answer, Result
 from .forms import QuestionForm, CreateQuizForm, CreateQuestionForm, CreateAnswerForm
 
 # Create your views here.
-def dashboard(request):
+def student_dashboard(request):
     # get quizzes that are close to being due
     due_quiz_list = Quiz.objects.order_by("-due_date")
 
@@ -12,7 +12,25 @@ def dashboard(request):
     context = {"due_quiz_list": due_quiz_list}
 
     # render the html file
-    return render(request, "quiz/dashboard.html", context)
+    return render(request, "quiz/student_dashboard.html", context)
+
+def teacher_dashboard(request):
+    if request.method == "POST":
+        if "add_quiz" in request.POST:
+            # If create quiz button pressed then create a empty quiz and redirect to edit quiz page
+            quiz = Quiz.objects.create(
+                quiz_name="Enter Quiz Name",
+                due_date=None,
+                quiz_description="Enter Quiz Description",
+                editing=True
+            )
+            redirect('quiz:edit_quiz', quiz_id=quiz.pk)
+
+    # temporarily order by reverse due date
+    quiz_list = Quiz.objects.order_by("-due_date")
+    context = {"quiz_list": quiz_list}
+
+    return render(request, "quiz/teacher_dashboard", context)
 
 def question(request, quiz_id):
     # Get the quiz and its questions
@@ -74,7 +92,7 @@ def get_next_question(quiz, questions, user):
 def results(request, quiz_id):
     if request.method == "POST":
         # Redirect back to the dashboard once quiz is submitted
-        return redirect("quiz:dashboard")
+        return redirect("quiz:student_dashboard")
 
     else:
         # Get the quiz and the results for the user that completed it
@@ -92,24 +110,16 @@ def results(request, quiz_id):
             "percentage_correct": percentage_correct,
         })
 
-def create_quiz(request):
-    if request.method == "POST":
-        # Save the quiz and redirect to the edit page so it can be edited
-        form = CreateQuizForm(request.POST)
-        if form.is_valid:
-            quiz = form.save()
-            redirect("quiz:edit_quiz", quiz_id=quiz.id)
-
-    else:
-        # Create the empty quiz form and send it to the template to render
-        quiz_form = CreateQuizForm()
-        render(request, "quiz/create_quiz.html", {"quiz_form": quiz_form})
-
 def edit_quiz(request, quiz_id):
     quiz = get_object_or_404(Quiz, pk=quiz_id)
+    quiz_form = CreateQuizForm(prefix="quiz", instance=quiz)
 
     if request.method == "POST":
+        answer_form = None
+        question_form = None
+
         if "new_question" in request.POST:
+            # If the new question button was pressed, create a new question model object and a form for it
             question = Question.objects.create(
                 quiz=quiz,
                 question_text="",
@@ -119,32 +129,52 @@ def edit_quiz(request, quiz_id):
             question_form = CreateQuestionForm(prefix="question", instance=question)
 
         elif "submit_question" in request.POST:
+            # Get an instance of the form with the data from the request and check if its valid
             question_form = CreateQuestionForm(request.POST, prefix="question")
             if question_form.is_valid():
-                # Save the question and redirect to the edit page
+                # Save the question
                 question = question_form.save(commit=False)
                 question.editing = False
                 question.save()
 
         elif "new_answer" in request.POST:
-            # TODO somehow fetch which question this answer belongs to from the request 
-            #Answer = Answer.objects.create(
-            #    question=
-            #)
-            pass
+            # If the new answer button was pressed, create a new answer model object and a form for it
+            question_id = request.POST.get('new_answer')
+            question = get_object_or_404(Question, pk=question_id)
+            answer = Answer.objects.create(
+                question=question,
+                choice_text="",
+                correct=False,
+                order=Answer.objects.filter(question=question).count() + 1,
+                editing=True
+            )
+            answer_form = CreateAnswerForm(prefix="answer", instance=answer)
+            
 
         elif "submit_answer" in request.POST:
+            # Get an instance of the form with the data from the request and check if its valid
             answer_form = CreateAnswerForm(request.POST, prefix="answer")
             if answer_form.is_valid():
-                # Save the question and redirect to the edit page
+                # Save the question
                 answer = answer_form.save(commit=False)
                 answer.editing = False
                 question.save()
+
+        elif "submit_quiz" in request.POST:
+            # Get an instance of the form with the data from the request and check if its valid
+            submitted_quiz_form = CreateQuizForm(request.POST, prefix="quiz")
+            if submitted_quiz_form.is_valid():
+                # Save the question
+                quiz = submitted_quiz_form.save(commit=False)
+                answer.editing = False
+                quiz.save()
+                return redirect("quiz:teacher_dashboard")
 
         # Once all the forms are processed or new ones are created, render the template with the updated context
         questions = Question.objects.filter(quiz=quiz)
         context = {
             "quiz": quiz,
+            "quiz_form": quiz_form,
             "questions": questions,
             "question_form": question_form,
             "answer_form": answer_form,
@@ -155,11 +185,7 @@ def edit_quiz(request, quiz_id):
         # If the request isn't a POST, don't provide a form for the question as we haven't added one yet
         context = {
             "quiz": quiz, 
+            "quiz_form": quiz_form,
             "questions": Question.objects.filter(quiz=quiz),
         }
         return render(request, "quiz/edit_quiz.html", context)
-
-    # Create the emtpy forms with prefixes so they can be identified in POST request
-    question_form = CreateQuestionForm(prefix="question")
-    answer_form = CreateAnswerForm(prefix="answer")
-
