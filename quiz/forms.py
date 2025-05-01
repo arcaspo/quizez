@@ -1,6 +1,6 @@
 from django import forms
 from .models import Answer, Quiz, Question
-from django.forms import ModelForm
+from django.forms import ModelForm, inlineformset_factory
 
 class QuestionForm(forms.Form):
     answer = forms.ChoiceField(
@@ -22,12 +22,5 @@ class CreateQuizForm(ModelForm):
         model = Quiz
         fields = ['quiz_name', 'due_date', 'quiz_description']
 
-class CreateQuestionForm(ModelForm):
-    class Meta:
-        model = Question
-        fields = ['question_text', 'order']
-
-class CreateAnswerForm(ModelForm):
-    class Meta:
-        model = Answer
-        fields = ['choice_text', 'correct', 'order']
+EditQuestionFormSet = inlineformset_factory(Quiz, Question, fields=('question_text'), extra=1)
+EditAnswerFormSet = inlineformset_factory(Question, Answer, fields=('choice_text', 'correct'), extra=1)

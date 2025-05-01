@@ -1,7 +1,7 @@
 from django.forms import formset_factory
 from django.shortcuts import get_object_or_404, render, get_list_or_404, redirect
 from .models import Quiz, Question, Answer, Result
-from .forms import QuestionForm, CreateQuizForm, CreateQuestionForm, CreateAnswerForm
+from .forms import QuestionForm, CreateQuizForm, EditQuestionFormSet, EditAnswerFormSet
 
 # Create your views here.
 def student_dashboard(request):
@@ -112,90 +112,32 @@ def results(request, quiz_id):
 
 def edit_quiz(request, quiz_id):
     quiz = get_object_or_404(Quiz, pk=quiz_id)
-    quiz_form = CreateQuizForm(prefix="quiz", instance=quiz)
+    question_formset = EditQuestionFormSet(instance=quiz, prefix='question_formset')
 
-    if request.method == "POST":
-        answer_form = None
-        question_form = None
-
-        if "new_question" in request.POST:
-            # If the new question button was pressed, create a new question model object and a form for it
-            question = Question.objects.create(
-                quiz=quiz,
-                question_text="",
-                order=quiz.number_of_questions + 1,
-                editing=True,
-            )
-            question_form = CreateQuestionForm(prefix="question", instance=question)
-
-        elif "submit_question" in request.POST:
-            # Get an instance of the form with the data from the request and check if its valid
-            question_id = request.POST.get('submit_question')
-            question = get_object_or_404(Question, pk=question_id)
-            question_form = CreateQuestionForm(request.POST, prefix="question", instance=question)
-            if question_form.is_valid():
-                # Save the question
-                question = question_form.save(commit=False)
-                question.editing = False
+    if request.method == 'POST':
+        question_formset = EditQuestionFormSet(request.POST, instance=quiz, prefix='question_formset')
+        if question_formset.is_valid():
+            questions = question_formset.save(commit=False)
+            for question in questions:
+                question.quiz = quiz
                 question.save()
 
-        elif "new_answer" in request.POST:
-            # If the new answer button was pressed, create a new answer model object and a form for it
-            question_id = request.POST.get('new_answer')
-            question = get_object_or_404(Question, pk=question_id)
-            answer = Answer.objects.create(
-                question=question,
-                choice_text="",
-                correct=False,
-                order=Answer.objects.filter(question=question).count() + 1,
-                editing=True
-            )
-            answer_form = CreateAnswerForm(prefix="answer", instance=answer)
+                answer_formset = EditAnswerFormSet(request.POST, instance=question, prefix=f'{question.id}_answer_formset')
+                if answer_formset.is_valid():
+                    answers = answer_formset.save(commit=False)
+                    for answer in answers:
+                        answer.question = question
+                        answer.save()
+                    answer_formset.save_m2m()
 
-            # Create the question_from again so it is still displayed after the answer is added
-            question_form = CreateQuestionForm(request.POST, prefix="question", instance=question)
+            answer_formset.save_m2m()
+            return redirect('forms:edit_quiz', quiz_id=quiz_id)
 
-        elif "submit_answer" in request.POST:
-            # Get an instance of the form with the data from the request and check if its valid
-            answer_form = CreateAnswerForm(request.POST, prefix="answer")
-            question = None
-            if answer_form.is_valid():
-                # Save the question
-                answer = answer_form.save(commit=False)
-                answer.editing = False
-                question = answer.question
-                answer.save()
+    context = {
+        'quiz': quiz,
+        'question_formset': question_formset
+    }
+    for question in quiz.question_set.all():
+        context[f'{question.id}_answer_formset'] = EditAnswerFormSet(instance=question, prefix=f'{question.id}_answer_formset')
 
-            # Create the question_from again so it is still displayed after the answer is added
-            question_form = CreateQuestionForm(request.POST, prefix="question", instance=question)
-
-
-        elif "submit_quiz" in request.POST:
-            # Get an instance of the form with the data from the request and check if its valid
-            submitted_quiz_form = CreateQuizForm(request.POST, prefix="quiz", instance=quiz)
-            if submitted_quiz_form.is_valid():
-                # Save the question
-                quiz = submitted_quiz_form.save(commit=False)
-                quiz.editing = False
-                quiz.save()
-                return redirect("quiz:teacher_dashboard")
-
-        # Once all the forms are processed or new ones are created, render the template with the updated context
-        questions = Question.objects.filter(quiz=quiz)
-        context = {
-            "quiz": quiz,
-            "quiz_form": quiz_form,
-            "questions": questions,
-            "question_form": question_form,
-            "answer_form": answer_form,
-        }
-        return render(request, "quiz/edit_quiz.html", context)
-        
-    else:
-        # If the request isn't a POST, don't provide a form for the question as we haven't added one yet
-        context = {
-            "quiz": quiz, 
-            "quiz_form": quiz_form,
-            "questions": Question.objects.filter(quiz=quiz),
-        }
-        return render(request, "quiz/edit_quiz.html", context)
+    render(request, 'quiz/edit_quiz.html', context)
