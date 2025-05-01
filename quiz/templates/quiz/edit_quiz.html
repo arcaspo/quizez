@@ -15,7 +15,7 @@
                             <form method="post">
                                 {% csrf_token %}
                                 {{ question_form.as_p }}
-                                <button type="submit" name="submit_question">Submit</button>
+                                <button type="submit" name="submit_question" value="{{ question.pk }}">Submit</button>
                             </form>
                             <ul>
                                 {% for answer in question.answer_set.all %}
@@ -24,7 +24,7 @@
                                             <form method="post">
                                                 {% csrf_token %}
                                                 {{ answer_form.as_p }}
-                                                <button type="submit" name="submit_answer">Submit</button>
+                                                <button type="submit" name="submit_answer" value="{{ answer.pk }}">Submit</button>
                                             </form>
                                         {% else %}
                                             <h2>{{ answer.choice_text }}</h2>

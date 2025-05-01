@@ -130,12 +130,13 @@ def edit_quiz(request, quiz_id):
 
         elif "submit_question" in request.POST:
             # Get an instance of the form with the data from the request and check if its valid
-            question_form = CreateQuestionForm(request.POST, prefix="question")
+            question_id = request.POST.get('submit_question')
+            question = get_object_or_404(Question, pk=question_id)
+            question_form = CreateQuestionForm(request.POST, prefix="question", instance=question)
             if question_form.is_valid():
                 # Save the question
                 question = question_form.save(commit=False)
                 question.editing = False
-                print(question.quiz)
                 question.save()
 
         elif "new_answer" in request.POST:
@@ -150,24 +151,32 @@ def edit_quiz(request, quiz_id):
                 editing=True
             )
             answer_form = CreateAnswerForm(prefix="answer", instance=answer)
-            
+
+            # Create the question_from again so it is still displayed after the answer is added
+            question_form = CreateQuestionForm(request.POST, prefix="question", instance=question)
 
         elif "submit_answer" in request.POST:
             # Get an instance of the form with the data from the request and check if its valid
             answer_form = CreateAnswerForm(request.POST, prefix="answer")
+            question = None
             if answer_form.is_valid():
                 # Save the question
                 answer = answer_form.save(commit=False)
                 answer.editing = False
-                question.save()
+                question = answer.question
+                answer.save()
+
+            # Create the question_from again so it is still displayed after the answer is added
+            question_form = CreateQuestionForm(request.POST, prefix="question", instance=question)
+
 
         elif "submit_quiz" in request.POST:
             # Get an instance of the form with the data from the request and check if its valid
-            submitted_quiz_form = CreateQuizForm(request.POST, prefix="quiz")
+            submitted_quiz_form = CreateQuizForm(request.POST, prefix="quiz", instance=quiz)
             if submitted_quiz_form.is_valid():
                 # Save the question
                 quiz = submitted_quiz_form.save(commit=False)
-                answer.editing = False
+                quiz.editing = False
                 quiz.save()
                 return redirect("quiz:teacher_dashboard")
 
