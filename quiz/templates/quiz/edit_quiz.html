@@ -8,36 +8,42 @@
         </form>
         
         <div class="sub-container">
-            {% for question in questions %}
-                {% if question.editing %}
-                    <form method="post">
-                        {% csrf_token %}
-                        {{ question_form.as_p }}
-                        <button type="submit" name="submit_question">Submit</button>
-                    </form>
-
-                    {% for answer in question.answer_set.all %}
-                        {% if answer.editing %}
+            <ul>
+                {% for question in questions %}
+                    <li>
+                        {% if question.editing %}
                             <form method="post">
                                 {% csrf_token %}
-                                {{ answer_form.as_p }}
-                                <button type="submit" name="submit_answer">Submit</button>
+                                {{ question_form.as_p }}
+                                <button type="submit" name="submit_question">Submit</button>
                             </form>
+                            <ul>
+                                {% for answer in question.answer_set.all %}
+                                    <li>
+                                        {% if answer.editing %}
+                                            <form method="post">
+                                                {% csrf_token %}
+                                                {{ answer_form.as_p }}
+                                                <button type="submit" name="submit_answer">Submit</button>
+                                            </form>
+                                        {% else %}
+                                            <h2>{{ answer.choice_text }}</h2>
+                                            <h2>{{ answer.correct }}</h2>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            <form method="post">
+                                {% csrf_token %}
+                                <button type="submit" name="new_answer" value="{{ question.pk }}">Add Answer</button>
+                            </form>
+
                         {% else %}
-                            <h2>{{ answer.choice_text }}</h2>
-                            <h2>{{ answer.correct }}</h2>
+                            <h2>{{ question.question_text }}</h2>
                         {% endif %}
-                    {% endfor %}
-
-                    <form method="post">
-                        {% csrf_token %}
-                        <button type="submit" name="new_answer" value="{{ question.pk }}">Add Answer</button>
-                    </form>
-
-                {% else %}
-                    <h2>{{ question.question_text }}</h2>
-                {% endif %}
-            {% endfor %}
+                    </li>
+                {% endfor %}
+            </ul>
         </div>
 
         <form method="post">

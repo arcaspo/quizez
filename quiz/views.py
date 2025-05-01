@@ -24,7 +24,7 @@ def teacher_dashboard(request):
                 quiz_description="Enter Quiz Description",
                 editing=True
             )
-            redirect('quiz:edit_quiz', quiz_id=quiz.pk)
+            return redirect('quiz:edit_quiz', quiz_id=quiz.pk)
 
     # temporarily order by reverse due date
     quiz_list = Quiz.objects.order_by("-due_date")
@@ -135,6 +135,7 @@ def edit_quiz(request, quiz_id):
                 # Save the question
                 question = question_form.save(commit=False)
                 question.editing = False
+                print(question.quiz)
                 question.save()
 
         elif "new_answer" in request.POST:
