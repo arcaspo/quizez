@@ -1,7 +1,7 @@
 from django.forms import formset_factory
 from django.shortcuts import get_object_or_404, render, get_list_or_404, redirect
 from .models import Quiz, Question, Answer, Result
-from .forms import QuestionForm, CreateQuizForm, EditQuestionFormSet, EditAnswerFormSet
+from .forms import QuestionForm, EditQuizForm, EditQuestionFormSet, EditAnswerFormSet
 
 # Create your views here.
 def student_dashboard(request):
@@ -112,32 +112,56 @@ def results(request, quiz_id):
 
 def edit_quiz(request, quiz_id):
     quiz = get_object_or_404(Quiz, pk=quiz_id)
-    question_formset = EditQuestionFormSet(instance=quiz, prefix='question_formset')
+    quiz_form = EditQuizForm(instance=quiz, prefix="quiz_form")
 
     if request.method == 'POST':
-        question_formset = EditQuestionFormSet(request.POST, instance=quiz, prefix='question_formset')
-        if question_formset.is_valid():
-            questions = question_formset.save(commit=False)
-            for question in questions:
-                question.quiz = quiz
-                question.save()
+        answers_valid = True
+        answer_formsets = {}
+        question_formset = EditQuestionFormSet(request.POST, instance=quiz, prefix="question_formset")
+        quiz_form = EditQuizForm(request.POST, instance=quiz, prefix="quiz_form")
+        if quiz_form.is_valid():
+            quiz_form.save()
+        
+            if question_formset.is_valid():
+                for question_form in question_formset:
+                    question = question_form.save(commit=False)
+                    question.quiz = quiz
+                    question.save()
 
-                answer_formset = EditAnswerFormSet(request.POST, instance=question, prefix=f'{question.id}_answer_formset')
-                if answer_formset.is_valid():
-                    answers = answer_formset.save(commit=False)
-                    for answer in answers:
-                        answer.question = question
-                        answer.save()
-                    answer_formset.save_m2m()
+                    answer_formset = EditAnswerFormSet(request.POST, instance=question, prefix=f'{question.id}_answer_formset')
+                    if answer_formset.is_valid():
+                        for answer_form in answer_formset:
+                            answer = answer_form.save(commit=False)
+                            answer.question = question
+                            answer.save()
+                    else:
+                        answers_valid = False
+                        print(answer_formset.errors)
 
-            answer_formset.save_m2m()
-            return redirect('forms:edit_quiz', quiz_id=quiz_id)
+                if answers_valid:
+                    return redirect('quiz:teacher_dashboard')
+
+            else:
+                print(question_formset.errors)
+        else:
+            print(quiz_form.errors)
+        
+        if not answers_valid:
+            # Create the answer_formsets manually if the other validations fail
+            for question in quiz.question_set.all():
+                answer_formsets[f"{question.id}_answer_formset"] = EditAnswerFormSet(request.POST, instance=question, prefix=f"{question.id}_answer_formset")
+
+    else:
+        question_formset = EditQuestionFormSet(instance=quiz, prefix='question_formset')
+        answer_formsets = {}
+        for question in quiz.question_set.all():
+            answer_formsets[f"{question.id}_answer_formset"] = EditAnswerFormSet(instance=question, prefix=f"{question.id}_answer_formset")
 
     context = {
         'quiz': quiz,
-        'question_formset': question_formset
+        'quiz_form': quiz_form,
+        'question_formset': question_formset,
+        'answer_formsets': answer_formsets
     }
-    for question in quiz.question_set.all():
-        context[f'{question.id}_answer_formset'] = EditAnswerFormSet(instance=question, prefix=f'{question.id}_answer_formset')
 
-    render(request, 'quiz/edit_quiz.html', context)
+    return render(request, 'quiz/edit_quiz.html', context)

@@ -17,10 +17,10 @@ class QuestionForm(forms.Form):
         ]
         self.fields['question_id'].initial = question.id
 
-class CreateQuizForm(ModelForm):
+class EditQuizForm(ModelForm):
     class Meta:
         model = Quiz
         fields = ['quiz_name', 'due_date', 'quiz_description']
 
-EditQuestionFormSet = inlineformset_factory(Quiz, Question, fields=('question_text'), extra=1)
-EditAnswerFormSet = inlineformset_factory(Question, Answer, fields=('choice_text', 'correct'), extra=1)
+EditQuestionFormSet = inlineformset_factory(Quiz, Question, fields=('question_text',), extra=0)
+EditAnswerFormSet = inlineformset_factory(Question, Answer, fields=('choice_text', 'correct'), extra=0)

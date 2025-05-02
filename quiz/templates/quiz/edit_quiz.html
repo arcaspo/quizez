@@ -1,54 +1,34 @@
 {% extends "quiz/layout.html" %}
+{% load template_filters %}
 {% block body %}
-    <div class="container">
-        <form method="post">
+    <form method="POST">
+        <div class="container">
             {% csrf_token %}
             {{ quiz_form.as_p }}
-            <button type="submit" name="submit_quiz">Create Quiz</button>
-        </form>
-        
-        <div class="sub-container">
-            <ul>
-                {% for question in questions %}
-                    <li>
-                        {% if question.editing %}
-                            <form method="post">
-                                {% csrf_token %}
-                                {{ question_form.as_p }}
-                                <button type="submit" name="submit_question" value="{{ question.pk }}">Submit</button>
-                            </form>
-                            <ul>
-                                {% for answer in question.answer_set.all %}
-                                    <li>
-                                        {% if answer.editing %}
-                                            <form method="post">
-                                                {% csrf_token %}
-                                                {{ answer_form.as_p }}
-                                                <button type="submit" name="submit_answer" value="{{ answer.pk }}">Submit</button>
-                                            </form>
-                                        {% else %}
-                                            <h2>{{ answer.choice_text }}</h2>
-                                            <h2>{{ answer.correct }}</h2>
-                                        {% endif %}
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                            <form method="post">
-                                {% csrf_token %}
-                                <button type="submit" name="new_answer" value="{{ question.pk }}">Add Answer</button>
-                            </form>
-
-                        {% else %}
-                            <h2>{{ question.question_text }}</h2>
-                        {% endif %}
-                    </li>
-                {% endfor %}
-            </ul>
         </div>
+        <div class="container">
+                {% csrf_token %}
+                {{ question_formset.management_form }}
+                {% for question_form in question_formset %}
+                    <div class="sub_container">
+                        {{ question_form.as_p }}
 
-        <form method="post">
-            {% csrf_token %}
-            <button type="submit" name="new_question">Add Question</button>
-        </form>
-    </div>
+                        <!-- Access the answer formset for this question -->
+                        {% with answer_formset_key=question_form.instance.id|stringformat:"s"|add:"_answer_formset" %}
+                            {% with answer_formset=answer_formsets|get_item:answer_formset_key %}
+                                {% if answer_formset %}
+                                    <div class="sub_container">
+                                        {{ answer_formset.management_form }}
+                                        {% for answer_form in answer_formset %}
+                                            {{ answer_form.as_p }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+                        {% endwith %}
+                    </div>
+                {% endfor %}
+                <button type="submit" name="submit_quiz">Create Quiz</button>
+        </div>
+    <form method="POST">
 {% endblock %}
