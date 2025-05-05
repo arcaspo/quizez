@@ -120,14 +120,15 @@ def edit_quiz(request, quiz_id):
         quiz_form = EditQuizForm(request.POST, instance=quiz, prefix="quiz_form")
         if quiz_form.is_valid():
             quiz_form.save()
-        
+
+            i = 0
             if question_formset.is_valid():
                 for question_form in question_formset:
                     question = question_form.save(commit=False)
                     question.quiz = quiz
                     question.save()
 
-                    answer_formset = EditAnswerFormSet(request.POST, instance=question, prefix=f'{question.id}_answer_formset')
+                    answer_formset = EditAnswerFormSet(request.POST, instance=question, prefix=f'{i}_answer_formset')
                     if answer_formset.is_valid():
                         for answer_form in answer_formset:
                             answer = answer_form.save(commit=False)
@@ -138,6 +139,7 @@ def edit_quiz(request, quiz_id):
                         print("invalid answer formset")
                         print(answer_formset.errors)
                         print(answer_formset)
+                    i += 1
 
                 if answers_valid:
                     return redirect('quiz:teacher_dashboard')
@@ -149,16 +151,20 @@ def edit_quiz(request, quiz_id):
         
         if not answers_valid:
             # Create the answer_formsets manually if the other validations fail
+            i = 0
             for question in quiz.question_set.all():
-                answer_formsets[f"{question.id}_answer_formset"] = EditAnswerFormSet(request.POST, instance=question, prefix=f"{question.id}_answer_formset")
+                answer_formsets[f"{i}_answer_formset"] = EditAnswerFormSet(request.POST, instance=question, prefix=f"{i}_answer_formset")
+                i += 1
 
     else:
         quiz_form = EditQuizForm(instance=quiz, prefix="quiz_form")
         question_formset = EditQuestionFormSet(instance=quiz, prefix='question_formset')
         answer_formsets = {}
 
+        i = 0
         for question in quiz.question_set.all():
-            answer_formsets[f"{question.id}_answer_formset"] = EditAnswerFormSet(instance=question, prefix=f"{question.id}_answer_formset")
+            answer_formsets[f"{i}_answer_formset"] = EditAnswerFormSet(instance=question, prefix=f"{i}_answer_formset")
+            i += 1
 
     # Generate an empty answer formset for the empty question form
     empty_question = Question(quiz=quiz)  # Create a dummy question instance

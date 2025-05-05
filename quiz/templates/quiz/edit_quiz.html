@@ -15,7 +15,7 @@
                         {{ question_form.as_p }}
 
                         <!-- Access the answer formset for this question -->
-                        {% with answer_formset_key=question_form.instance.id|stringformat:"s"|add:"_answer_formset" %}
+                        {% with answer_formset_key=forloop.counter0|stringformat:"s"|add:"_answer_formset" %}
                             {% with answer_formset=answer_formsets|get_item:answer_formset_key %}
                                 {% if answer_formset %}
                                     <div class="sub_container">
