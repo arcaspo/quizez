@@ -30,7 +30,7 @@ def teacher_dashboard(request):
     quiz_list = Quiz.objects.order_by("-due_date")
     context = {"quiz_list": quiz_list}
 
-    return render(request, "quiz/teacher_dashboard", context)
+    return render(request, "quiz/teacher_dashboard.html", context)
 
 def question(request, quiz_id):
     # Get the quiz and its questions
@@ -135,7 +135,9 @@ def edit_quiz(request, quiz_id):
                             answer.save()
                     else:
                         answers_valid = False
+                        print("invalid answer formset")
                         print(answer_formset.errors)
+                        print(answer_formset)
 
                 if answers_valid:
                     return redirect('quiz:teacher_dashboard')
@@ -154,14 +156,20 @@ def edit_quiz(request, quiz_id):
         quiz_form = EditQuizForm(instance=quiz, prefix="quiz_form")
         question_formset = EditQuestionFormSet(instance=quiz, prefix='question_formset')
         answer_formsets = {}
+
         for question in quiz.question_set.all():
             answer_formsets[f"{question.id}_answer_formset"] = EditAnswerFormSet(instance=question, prefix=f"{question.id}_answer_formset")
+
+    # Generate an empty answer formset for the empty question form
+    empty_question = Question(quiz=quiz)  # Create a dummy question instance
+    empty_answer_formset = EditAnswerFormSet(instance=empty_question, prefix='__prefix__')
 
     context = {
         'quiz': quiz,
         'quiz_form': quiz_form,
         'question_formset': question_formset,
-        'answer_formsets': answer_formsets
+        'answer_formsets': answer_formsets,
+        'empty_answer_formset': empty_answer_formset,  # Pass the empty answer formset
     }
 
     return render(request, 'quiz/edit_quiz.html', context)

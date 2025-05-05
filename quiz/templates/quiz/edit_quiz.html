@@ -33,27 +33,90 @@
                 <button type="button" id="add_question_form">Add Question</button>
         </div>
     </form>
+    <template id="answer-empty-form">
+        {{ empty_answer_formset.empty_form.as_p }}
+    </template>
     <template id="question-empty-form">
         <div class="sub_container">
             {{ question_formset.empty_form.as_p }}
+
+            <!-- Include the empty answer formset -->
+            <div class="sub_container">
+                {{ empty_answer_formset.management_form }}
+            </div>
+            <button type="button" class="add_answer_form" name="__prefix___answer_formset">Add Answer</button>
         </div>
     </template>
     <script>
-        const addQuestionFormButton = document.getElementById('add_question_form');
         const questionFormContainer = document.getElementById('question_container');
-        const emptyQuestionFormTemplate = document.getElementById('question-empty-form').content.cloneNode(true);
+        const emptyQuestionFormTemplate = document.getElementById('question-empty-form').content;
+        const emptyAnswerFormTemplate = document.getElementById('answer-empty-form').content;
         const totalFormsInput = document.querySelector('#id_question_formset-TOTAL_FORMS');
+        const addQuestionFormButton = document.getElementById('add_question_form')
 
-        addQuestionFormButton.addEventListener("click", addForm);
+        addQuestionFormButton.addEventListener("click", addQuestionForm);
+        document.querySelectorAll('.add_answer_form').forEach(button => button.addEventListener('click', addAnswerForm))
 
-        function addForm(event) {
-            const newForm = emptyQuestionFormTemplate.cloneNode(true);
-            
-            // Update the form index
-            const formCount = parseInt(totalFormsInput.value, 10);
+        function addAnswerForm(event) {
+            // Clone the empty question form template
+            const newForm = emptyAnswerFormTemplate.cloneNode(true);
+
+            const formsetPrefix = event.target.getAttribute("name");
+            const totalAnswerFormsInput = document.querySelector('#id_'+formsetPrefix+'-TOTAL_FORMS')
+
+            // Get the current number of forms
+            const formCount = parseInt(totalAnswerFormsInput.value, 10);
+
+            // Update the prefix for the answer form
+            newForm.querySelectorAll('[name]').forEach(input => {
+                input.name = input.name.replace('__prefix__', formsetPrefix);
+                input.id = input.id.replace('__prefix__', formsetPrefix);
+            });
+
             newForm.querySelectorAll('[name]').forEach(input => {
                 input.name = input.name.replace('__prefix__', formCount);
                 input.id = input.id.replace('__prefix__', formCount);
+            });
+
+            newForm.querySelectorAll('label[for]').forEach(input => {
+                input.htmlFor = input.htmlFor.replace('__prefix__', formsetPrefix);
+            });
+
+            newForm.querySelectorAll('label[for]').forEach(input => {
+                input.htmlFor = input.htmlFor.replace('__prefix__', formCount);
+            });
+
+            // Append the new form to the container
+            event.target.parentElement.querySelector('.sub_container').appendChild(newForm);
+
+            // Increment the total form count
+            totalAnswerFormsInput.value = formCount + 1;
+        }
+
+        function addQuestionForm(event) {
+            // Clone the empty question form template
+            const newForm = emptyQuestionFormTemplate.cloneNode(true);
+
+            // Add an event listener for the button
+            newForm.querySelector('.add_answer_form').addEventListener('click', addAnswerForm)
+
+            // Get the current number of forms
+            const formCount = parseInt(totalFormsInput.value, 10);
+
+            // Update the form index for the answer formset
+            newForm.querySelectorAll('input[name]').forEach(input => {
+                input.name = input.name.replace('__prefix__', formCount+"_answer_formset");
+                input.id = input.id.replace('__prefix__', formCount+"_answer_formset");
+            });
+
+            // Update the form index for the question form
+            newForm.querySelectorAll('[name]').forEach(input => {
+                input.name = input.name.replace('__prefix__', formCount);
+                input.id = input.id.replace('__prefix__', formCount);
+            });
+
+            newForm.querySelectorAll('label[for]').forEach(input => {
+                input.htmlFor = input.htmlFor.replace('__prefix__', formCount);
             });
 
             // Append the new form to the container
