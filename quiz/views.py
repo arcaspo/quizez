@@ -112,7 +112,6 @@ def results(request, quiz_id):
 
 def edit_quiz(request, quiz_id):
     quiz = get_object_or_404(Quiz, pk=quiz_id)
-    quiz_form = EditQuizForm(instance=quiz, prefix="quiz_form")
 
     if request.method == 'POST':
         answers_valid = True
@@ -152,6 +151,7 @@ def edit_quiz(request, quiz_id):
                 answer_formsets[f"{question.id}_answer_formset"] = EditAnswerFormSet(request.POST, instance=question, prefix=f"{question.id}_answer_formset")
 
     else:
+        quiz_form = EditQuizForm(instance=quiz, prefix="quiz_form")
         question_formset = EditQuestionFormSet(instance=quiz, prefix='question_formset')
         answer_formsets = {}
         for question in quiz.question_set.all():

@@ -5,8 +5,9 @@
         <div class="container">
             {% csrf_token %}
             {{ quiz_form.as_p }}
+            <button type="submit" name="submit_quiz">Create Quiz</button>
         </div>
-        <div class="container">
+        <div class="container" id="question_container">
                 {% csrf_token %}
                 {{ question_formset.management_form }}
                 {% for question_form in question_formset %}
@@ -23,12 +24,43 @@
                                             {{ answer_form.as_p }}
                                         {% endfor %}
                                     </div>
+                                    <button type="button" class="add_answer_form" name="{{ answer_formset_key }}">Add Answer</button>
                                 {% endif %}
                             {% endwith %}
                         {% endwith %}
                     </div>
                 {% endfor %}
-                <button type="submit" name="submit_quiz">Create Quiz</button>
+                <button type="button" id="add_question_form">Add Question</button>
         </div>
-    <form method="POST">
+    </form>
+    <template id="question-empty-form">
+        <div class="sub_container">
+            {{ question_formset.empty_form.as_p }}
+        </div>
+    </template>
+    <script>
+        const addQuestionFormButton = document.getElementById('add_question_form');
+        const questionFormContainer = document.getElementById('question_container');
+        const emptyQuestionFormTemplate = document.getElementById('question-empty-form').content.cloneNode(true);
+        const totalFormsInput = document.querySelector('#id_question_formset-TOTAL_FORMS');
+
+        addQuestionFormButton.addEventListener("click", addForm);
+
+        function addForm(event) {
+            const newForm = emptyQuestionFormTemplate.cloneNode(true);
+            
+            // Update the form index
+            const formCount = parseInt(totalFormsInput.value, 10);
+            newForm.querySelectorAll('[name]').forEach(input => {
+                input.name = input.name.replace('__prefix__', formCount);
+                input.id = input.id.replace('__prefix__', formCount);
+            });
+
+            // Append the new form to the container
+            questionFormContainer.insertBefore(newForm, addQuestionFormButton);
+
+            // Increment the total form count
+            totalFormsInput.value = formCount + 1;
+        }
+    </script>
 {% endblock %}
