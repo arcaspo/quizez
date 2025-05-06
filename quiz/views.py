@@ -1,23 +1,47 @@
 from django.forms import formset_factory
 from django.shortcuts import get_object_or_404, render, get_list_or_404, redirect
 from .models import Quiz, Question, Answer, Result
-from .forms import QuestionForm, EditQuizForm, EditQuestionFormSet, EditAnswerFormSet
+from .forms import QuestionForm, EditQuizForm, EditQuestionFormSet, EditAnswerFormSet, SignupForm
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import Group
 
-def is_member_of_group(user, group):
-    return user.groups.filter(name=group).exists()
+def is_teacher(user):
+    return user.groups.filter(name='teacher').exists()
 
+def is_student(user):
+    return user.groups.filter(name='student').exists()
+
+def signup(request):
+    if request.method == 'POST':
+        form = SignupForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+
+            # Get the selected user type
+            user_type = form.cleaned_data['user_type']
+
+            # Assign the user to the correct group
+            group = Group.objects.get(name=user_type)  # Ensure the group exists in the database
+            user.groups.add(group)
+            
+            return redirect('quiz:login')  # Redirect to login after signup
+    else:
+        form = SignupForm()
+    return render(request, 'quiz/signup.html', {"form": form})
+
+def homepage(request):
+    return render(request, 'quiz/homepage.html')
 
 @login_required
 def dashboard(request):
     # If we're authenticated as a teacher redirect to the teacher_dashboard
     # If we're authenticated as a student redirect to the student_dashboard
-    if is_member_of_group(request.user, 'teacher'):
-        redirect('quiz:teacher_dashboard')
-    elif is_member_of_group(request.user, 'student'):
-        redirect('quiz:student_dashboard')
+    if is_teacher(request.user):
+        return redirect('quiz:teacher_dashboard')
+    elif is_student(request.user):
+        return redirect('quiz:student_dashboard')
 
-@user_passes_test(is_member_of_group(group='teacher'))
+@user_passes_test(is_student)
 def student_dashboard(request):
     # get quizzes that are close to being due
     due_quiz_list = Quiz.objects.order_by("-due_date")
@@ -28,6 +52,7 @@ def student_dashboard(request):
     # render the html file
     return render(request, "quiz/student_dashboard.html", context)
 
+@user_passes_test(is_teacher)
 def teacher_dashboard(request):
     if request.method == "POST":
         if "add_quiz" in request.POST:
@@ -46,12 +71,20 @@ def teacher_dashboard(request):
 
     return render(request, "quiz/teacher_dashboard.html", context)
 
+@login_required
 def question(request, quiz_id):
     # Get the quiz and its questions
     quiz = get_object_or_404(Quiz, pk=quiz_id)
     questions = get_list_or_404(Question, quiz=quiz)
 
     if request.method == "POST":
+        if "exit" in request.POST:
+            if is_teacher(request.user):
+                return redirect('quiz:edit_quiz', quiz_id=quiz_id)
+            
+            else:
+                return redirect('quiz:dashboard')
+
         # Get the question that was answered
         question_id = request.POST.get('submit')
         question = get_object_or_404(Question, pk=question_id)
@@ -87,7 +120,7 @@ def question(request, quiz_id):
         return render(request, "quiz/question.html", {"quiz": quiz, "question": next_question, "form": form})
 
     else:
-        # If theres no more questions, Show a finished page with stats (not done yet)
+        # If theres no more questions, Show a finished page with stats
         return redirect("quiz:results", quiz_id=quiz_id)
 
 def get_next_question(quiz, questions, user):
@@ -106,7 +139,15 @@ def get_next_question(quiz, questions, user):
 def results(request, quiz_id):
     if request.method == "POST":
         # Redirect back to the dashboard once quiz is submitted
-        return redirect("quiz:student_dashboard")
+
+        if is_teacher(request.user):
+            # delete the results if it is a teacher previewing the quiz and redirect back to edit page
+            quiz = get_object_or_404(Quiz, pk=quiz_id)
+            Result.objects.filter(quiz=quiz, user=request.user).delete()
+            return redirect("quiz:edit_quiz", quiz_id=quiz_id)
+
+        else:
+            return redirect("quiz:dashboard")
 
     else:
         # Get the quiz and the results for the user that completed it
@@ -156,7 +197,7 @@ def edit_quiz(request, quiz_id):
                     i += 1
 
                 if answers_valid:
-                    return redirect('quiz:teacher_dashboard')
+                    return redirect('quiz:dashboard')
 
             else:
                 print(question_formset.errors)

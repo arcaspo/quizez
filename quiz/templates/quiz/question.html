@@ -1,10 +1,15 @@
 {% extends "quiz/layout.html" %}
 {% block body %}
     <h1>{{ quiz.quiz_name }}</h1>
-    <p>{{ question.question_text }}</p>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" name="submit" value="{{ question.id }}">Next</button>
+    <form method="POST">
+        <button type="submit" name="exit">Exit</button>
     </form>
+    <div>
+        <p>{{ question.question_text }}</p>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" name="submit" value="{{ question.id }}">Next</button>
+        </form>
+    </div>
 {% endblock %}

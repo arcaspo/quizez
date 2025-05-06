@@ -1,0 +1,6 @@
+{% extends "quiz/layout.html" %}
+{% block body %}
+    <p>Welcome to <b>Quizez</b>, the best way to help classrooms revise</p>
+    <a href="{% url 'quiz:login' %}">Login</a>
+    <a href="{% url 'quiz:signup' %}">Signup</a>
+{% endblock %}

@@ -27,6 +27,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+LOGIN_REDIRECT_URL = '/quiz/dashboard'  # Redirect to the dashboard after login
+LOGOUT_REDIRECT_URL = '/quiz/'  # Redirect to the homepage after logout
+LOGIN_URL = '/quiz/login/'  # Redirect to your custom login page
 
 # Application definition
 
