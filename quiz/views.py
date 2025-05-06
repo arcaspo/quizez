@@ -2,8 +2,22 @@ from django.forms import formset_factory
 from django.shortcuts import get_object_or_404, render, get_list_or_404, redirect
 from .models import Quiz, Question, Answer, Result
 from .forms import QuestionForm, EditQuizForm, EditQuestionFormSet, EditAnswerFormSet
+from django.contrib.auth.decorators import login_required, user_passes_test
 
-# Create your views here.
+def is_member_of_group(user, group):
+    return user.groups.filter(name=group).exists()
+
+
+@login_required
+def dashboard(request):
+    # If we're authenticated as a teacher redirect to the teacher_dashboard
+    # If we're authenticated as a student redirect to the student_dashboard
+    if is_member_of_group(request.user, 'teacher'):
+        redirect('quiz:teacher_dashboard')
+    elif is_member_of_group(request.user, 'student'):
+        redirect('quiz:student_dashboard')
+
+@user_passes_test(is_member_of_group(group='teacher'))
 def student_dashboard(request):
     # get quizzes that are close to being due
     due_quiz_list = Quiz.objects.order_by("-due_date")
