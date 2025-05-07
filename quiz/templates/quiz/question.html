@@ -1,15 +1,19 @@
 {% extends "quiz/layout.html" %}
 {% block body %}
-    <h1>{{ quiz.quiz_name }}</h1>
-    <form method="POST">
-        <button type="submit" name="exit">Exit</button>
-    </form>
-    <div>
-        <p>{{ question.question_text }}</p>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" name="submit" value="{{ question.id }}">Next</button>
-        </form>
+    <div class="card" id="button">
+        <div style="width:50%">
+            <h1>{{ quiz.quiz_name }}</h1>
+            <p>{{ quiz.quiz_description }}</p>    
+        </div>
+        <div style="width:50%">
+            <p>Due: {{ quiz.due_date }}</p>
+            <p>{{ quiz.result_set.count }} out of {{ quiz.question_set.count }} completed</p>    
+        </div>
     </div>
+    <h3>{{ question.question_text }}</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" name="submit" value="{{ question.id }}">Next</button>
+    </form>
 {% endblock %}

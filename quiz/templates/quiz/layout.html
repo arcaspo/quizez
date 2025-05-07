@@ -6,7 +6,22 @@
    <link href="{% static 'quiz/styles.css' %}" rel="stylesheet">
 </head>
 <body>
-   {% block body%}
-   {% endblock %}
+   <div class="navbar">
+      <a href="{% url 'quiz:homepage' %}" class="navbar-links">Quizez</a>
+      <a href="{% url 'quiz:dashboard' %}" class="navbar-links">Dashboard</a>
+      {% if user.is_authenticated %}
+         <form action="{% url 'quiz:logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="right-navbar-links">Logout</button>
+         </form>
+      {% else %}
+         <a href="{% url 'quiz:signup' %}" class="right-navbar-links">Signup</a>
+         <a href="{% url 'quiz:login' %}" class="right-navbar-links">Login</a>
+      {% endif %}
+   </div>
+   <div class="main">
+      {% block body%}
+      {% endblock %}
+   </div>
 </body>
 </html>

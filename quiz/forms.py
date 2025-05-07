@@ -38,5 +38,5 @@ class EditQuizForm(ModelForm):
             'due_date': forms.DateTimeInput(attrs={'type': 'datetime-local'})
         }
 
-EditQuestionFormSet = inlineformset_factory(Quiz, Question, fields=('question_text',), extra=0)
-EditAnswerFormSet = inlineformset_factory(Question, Answer, fields=('choice_text', 'correct'), extra=0)
+EditQuestionFormSet = inlineformset_factory(Quiz, Question, fields=('question_text',), extra=0, can_delete=False)
+EditAnswerFormSet = inlineformset_factory(Question, Answer, fields=('choice_text', 'correct'), extra=0, can_delete=False)

@@ -43,13 +43,35 @@ def dashboard(request):
 
 @user_passes_test(is_student)
 def student_dashboard(request):
-    # get quizzes that are close to being due
-    due_quiz_list = Quiz.objects.order_by("-due_date")
+    # Get all quizzes
+    all_quizzes = Quiz.objects.all()
 
-    # create the context that gets sent to the html file
-    context = {"due_quiz_list": due_quiz_list}
+    # Categorize quizzes
+    completed_quizzes = []
+    in_progress_quizzes = []
+    not_started_quizzes = []
 
-    # render the html file
+    for quiz in all_quizzes:
+        # Get all results for the current user and this quiz
+        user_results = Result.objects.filter(quiz=quiz, user=request.user)
+
+        if user_results.exists():
+            # Check if all questions have been answered
+            if user_results.count() == quiz.number_of_questions:
+                completed_quizzes.append(quiz)
+            else:
+                in_progress_quizzes.append(quiz)
+        else:
+            not_started_quizzes.append(quiz)
+
+    # Create the context to send to the template
+    context = {
+        "completed_quizzes": completed_quizzes,
+        "in_progress_quizzes": in_progress_quizzes,
+        "not_started_quizzes": not_started_quizzes,
+    }
+
+    # Render the HTML file
     return render(request, "quiz/student_dashboard.html", context)
 
 @user_passes_test(is_teacher)
@@ -78,13 +100,6 @@ def question(request, quiz_id):
     questions = get_list_or_404(Question, quiz=quiz)
 
     if request.method == "POST":
-        if "exit" in request.POST:
-            if is_teacher(request.user):
-                return redirect('quiz:edit_quiz', quiz_id=quiz_id)
-            
-            else:
-                return redirect('quiz:dashboard')
-
         # Get the question that was answered
         question_id = request.POST.get('submit')
         question = get_object_or_404(Question, pk=question_id)

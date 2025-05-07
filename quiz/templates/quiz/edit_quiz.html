@@ -2,53 +2,59 @@
 {% load template_filters %}
 {% block body %}
     <form method="POST">
-        <div class="container">
+        <h1>Quiz</h1>
+        <div class="card">
             {% csrf_token %}
             {{ quiz_form.as_p }}
             <button type="submit" name="submit_quiz">Create Quiz</button>
         </div>
-        <div class="container" id="question_container">
-                {% csrf_token %}
-                {{ question_formset.management_form }}
-                {% for question_form in question_formset %}
-                    <div class="sub_container">
-                        {{ question_form.as_p }}
-
-                        <!-- Access the answer formset for this question -->
-                        {% with answer_formset_key=forloop.counter0|stringformat:"s"|add:"_answer_formset" %}
-                            {% with answer_formset=answer_formsets|get_item:answer_formset_key %}
-                                {% if answer_formset %}
-                                    <div class="sub_container">
-                                        {{ answer_formset.management_form }}
-                                        {% for answer_form in answer_formset %}
+        <h1>Questions</h1>
+        <div id="question-container">
+            {{ question_formset.management_form }}
+            {% for question_form in question_formset %}
+                <div class="card">
+                    {{ question_form.as_p }}
+    
+                    <!-- Access the answer formset for this question -->
+                    {% with answer_formset_key=forloop.counter0|stringformat:"s"|add:"_answer_formset" %}
+                        {% with answer_formset=answer_formsets|get_item:answer_formset_key %}
+                            {% if answer_formset %}
+                                <div id="answer-container">
+                                    {{ answer_formset.management_form }}
+                                    {% for answer_form in answer_formset %}
+                                        <div class="card">
                                             {{ answer_form.as_p }}
-                                        {% endfor %}
-                                    </div>
-                                    <button type="button" class="add_answer_form" name="{{ answer_formset_key }}">Add Answer</button>
-                                {% endif %}
-                            {% endwith %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="button" class="add_answer_form" name="{{ answer_formset_key }}">Add Answer</button>
+                            {% endif %}
                         {% endwith %}
-                    </div>
-                {% endfor %}
-                <button type="button" id="add_question_form">Add Question</button>
+                    {% endwith %}
+                </div>
+            {% endfor %}
+            <button type="button" id="add_question_form">Add Question</button>
         </div>
+        
     </form>
     <template id="answer-empty-form">
-        {{ empty_answer_formset.empty_form.as_p }}
+        <div class="card">
+            {{ empty_answer_formset.empty_form.as_p }}
+        </div>
     </template>
     <template id="question-empty-form">
-        <div class="sub_container">
+        <div class="card">
             {{ question_formset.empty_form.as_p }}
 
             <!-- Include the empty answer formset -->
-            <div class="sub_container">
+            <div id="answer-container">
                 {{ empty_answer_formset.management_form }}
             </div>
-            <button type="button" class="add_answer_form" name="__prefix___answer_formset">Add Answer</button>
+            <button type="button" class="add_answer_form" name="__prefix___answer_formset">Add Answer</button>    
         </div>
     </template>
     <script>
-        const questionFormContainer = document.getElementById('question_container');
+        const questionFormContainer = document.getElementById('question-container');
         const emptyQuestionFormTemplate = document.getElementById('question-empty-form').content;
         const emptyAnswerFormTemplate = document.getElementById('answer-empty-form').content;
         const totalFormsInput = document.querySelector('#id_question_formset-TOTAL_FORMS');
@@ -87,7 +93,7 @@
             });
 
             // Append the new form to the container
-            event.target.parentElement.querySelector('.sub_container').appendChild(newForm);
+            event.target.parentElement.querySelector("#answer-container").appendChild(newForm);
 
             // Increment the total form count
             totalAnswerFormsInput.value = formCount + 1;

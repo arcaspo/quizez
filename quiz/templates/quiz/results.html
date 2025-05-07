@@ -1,19 +1,17 @@
 {% extends "quiz/layout.html" %}
 {% block body %}
-    <h1>Quiz Results</h1>
-    <h2> {{ percentage_correct }}% </h2>
-    <p>Your score: {{ num_correct }}/{{ quiz.number_of_questions }}</p>
-    <ul>
-        {% for result in results %}
-            <li>
-                Question: {{ result.question.question_text }}<br>
-                Your answer: {{ result.answer.choice_text}}<br>
-                Correct answer: {{ result.correct_answer }}<br>
-            </li>
-        {% endfor %}
-    </ul>
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit" name="submit">Submit</button>
-    </form>
+        <h1>Quiz Results</h1>
+        <h2> {{ percentage_correct }}% </h2>
+        <p>Your score: {{ num_correct }}/{{ quiz.number_of_questions }}</p>
+            {% for result in results %}
+                <div class="card"{% if result.is_correct %}id="correct"{% else %}id="incorrect"{% endif %}>
+                    <b>Question: {{ result.question.question_text }}</b><br>
+                    Your answer: {{ result.answer.choice_text}}<br>
+                    Correct answer: {{ result.correct_answer }}<br>
+                </div>
+            {% endfor %}
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" name="submit">Submit</button>
+        </form>
 {% endblock %}

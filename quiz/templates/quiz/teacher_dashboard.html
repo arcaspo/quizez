@@ -1,16 +1,25 @@
 {% extends "quiz/base_dashboard.html" %}
 {% block content %}
-    <h1>My Quizzes</h1>
+    <h1>Edit and Create Quizzes</h1>
     <form method="post">
         {% csrf_token %}
         <button type="submit" name="add_quiz">Add Quiz</button>
     </form>
     {% if quiz_list %}
-        <ul>
         {% for quiz in quiz_list %}
-            <li><a href="{% url 'quiz:edit_quiz' quiz.id %}">{{ quiz.quiz_name }}</a></li>
+            <a href="{% url 'quiz:edit_quiz' quiz.id %}" class="no-style">
+                <div class="card" id="button">
+                    <div style="width: 50%">
+                        <h1>{{ quiz.quiz_name }}</h1>
+                        <p>{{ quiz.quiz_description }}</p>    
+                    </div>
+                    <div style="width: 50%">
+                        <p>Due: {{ quiz.due_date }}</p>
+                        <p>{{ quiz.question_set.count }} Questions</p>    
+                    </div>
+                </div>
+            </a>
         {% endfor %}
-        </ul>
     {% else %}
         <p>No quizzes created.</p>
     {% endif %}
