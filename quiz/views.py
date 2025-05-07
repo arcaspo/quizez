@@ -215,27 +215,24 @@ def edit_quiz(request, quiz_id):
                     return redirect('quiz:dashboard')
 
             else:
-                print(question_formset.errors)
+                # Need to create the answer_formsets manually if the other validations fail
+                i = 0
+                answer_formsets = generate_answer_formsets(quiz)
+
         else:
             print(quiz_form.errors)
+            answer_formsets = generate_answer_formsets(quiz)
+
         
         if not answers_valid:
             # Create the answer_formsets manually if the other validations fail
-            i = 0
-            for question in quiz.question_set.all():
-                answer_formsets[f"{i}_answer_formset"] = EditAnswerFormSet(request.POST, instance=question, prefix=f"{i}_answer_formset")
-                i += 1
+            answer_formsets = generate_answer_formsets(quiz)
+
 
     else:
         quiz_form = EditQuizForm(instance=quiz, prefix="quiz_form")
         question_formset = EditQuestionFormSet(instance=quiz, prefix='question_formset')
-        answer_formsets = {}
-
-        i = 0
-        for question in quiz.question_set.all():
-            answer_formsets[f"{i}_answer_formset"] = EditAnswerFormSet(instance=question, prefix=f"{i}_answer_formset")
-            i += 1
-
+        answer_formsets = generate_answer_formsets(quiz)
     # Generate an empty answer formset for the empty question form
     empty_question = Question(quiz=quiz)  # Create a dummy question instance
     empty_answer_formset = EditAnswerFormSet(instance=empty_question, prefix='__prefix__')
@@ -249,3 +246,12 @@ def edit_quiz(request, quiz_id):
     }
 
     return render(request, 'quiz/edit_quiz.html', context)
+
+def generate_answer_formsets(quiz):
+    i = 0
+    answer_formsets = {}
+    for question in quiz.question_set.all():
+        answer_formsets[f"{i}_answer_formset"] = EditAnswerFormSet(instance=question, prefix=f"{i}_answer_formset")
+        i += 1
+
+    return answer_formsets
